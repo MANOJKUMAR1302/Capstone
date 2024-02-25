@@ -3,9 +3,10 @@
 import os
 import pyarrow.parquet as pq
 import pandas as pd
-import dask.dataframe as dd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-#%%
+ #%%
 # Define the path to the directory containing Parquet files in your Google Drive
 parquet_directory = '/home/ubuntu/Capstone/data'
 
@@ -14,6 +15,8 @@ parquet_files = [file for file in os.listdir(parquet_directory) if file.endswith
 print(parquet_files)
 
 # %%
+## Data Preprocessing
+
 # Read each Parquet file and do something with it (e.g., print schema)
 for file_name in parquet_files:
     file_path = os.path.join(parquet_directory, file_name)
@@ -58,8 +61,6 @@ for filename, counts in unique_counts.items():
     print(f"Unique value counts for {filename}:")
     print(counts)
     print()  # Print empty line for better readability
-
-
 
 # %%
 #
@@ -175,7 +176,6 @@ df_258N_hue.rename(columns=hue_new_column_names, inplace=True)
 # Print the first five rows of 258N_hue file
 df_258N_hue.head()
 
-
 #%%
 # Joining of B2, B6, B11, B12, EVI, Hue datasets of location 258N
 df_258N_merge = pd.concat([df_258N_B2, df_258N_B6, df_258N_B11, df_258N_B12, df_258N_EVI, df_258N_hue], axis=1, join='outer')
@@ -187,7 +187,6 @@ df_258N_merge.head()
 df_258N_merge.shape
 
 #%%
-import pandas as pd
 # Checking for the repitition of the existing columns like crop_id and crop_name for all six files
 # Assuming df_258N_B2, df_258N_B6, ..., df_258N_hue are your DataFrames
 
@@ -200,17 +199,16 @@ df_258N_EVI_crop = df_258N_EVI[['EVI_crop_id', 'EVI_crop_name']]
 df_258N_hue_crop = df_258N_hue[['hue_crop_id', 'hue_crop_name']]
 # Repeat this for the other DataFrames as well
 
+#%%
 # Concatenate the selected columns
 df_258N_merge_crop = pd.concat([df_258N_B2_crop, df_258N_B6_crop, df_258N_B11_crop, df_258N_B12_crop, df_258N_B2_crop, df_258N_EVI_crop,  df_258N_hue_crop], axis=1, join='outer')
 
 df_258N_merge_crop.sample(10)
 
 #%%
-import pandas as pd
 #Checking for the repitition of the existing columns like id, fid, SHAPE_AREA, SHAPE_LEN for all six files
 
 # Assuming df_258N_B2, df_258N_B6, ..., df_258N_hue are your DataFrames
-
 
 # Select 'crop_id' and 'crop_name' columns from each DataFrame
 df_258N_B2_crop = df_258N_B2[['id', 'fid', 'SHAPE_AREA','SHAPE_LEN']]
@@ -241,8 +239,6 @@ df_258N_merge.shape
  
 #%%
 df_258N_merge.head()
-
-
 
 # %%
 #
@@ -278,8 +274,6 @@ df_259N_B6.rename(columns=B6_new_column_names, inplace=True)
 
 # Print the first five rows of 259N_B6 file
 df_259N_B6.head()
-
-
 
 #%%
 # Read the 259N_B11 file
@@ -345,7 +339,6 @@ df_259N_hue.rename(columns={'SHAPE_LEN': 'hue_SHAPE_LEN'}, inplace=True)
 # Print the first five rows of 259N_hue file
 df_259N_hue.head()
 
-
 #%%
 # Joining of B2, B6, B11, B12, EVI, Hue datasets of location 259N
 df_259N_merge = pd.concat([df_259N_B2, df_259N_B6, df_259N_B11, df_259N_B12, df_259N_EVI, df_259N_hue], axis=1, join='outer')
@@ -358,7 +351,6 @@ df_259N_merge.head()
 df_259N_merge.shape
 
 #%%
-import pandas as pd
 # Checking for the repitition of the existing columns like crop_id and crop_name for all six files
 # Assuming df_259N_B2, df_259N_B6, ..., df_259N_hue are your DataFrames
 
@@ -377,7 +369,6 @@ df_259N_merge_crop = pd.concat([df_259N_B2_crop, df_259N_B6_crop, df_259N_B11_cr
 df_259N_merge_crop.sample(10)
 
 #%%
-import pandas as pd
 #Checking for the repitition of the existing columns like id, fid, SHAPE_AREA, SHAPE_LEN for all six files
 
 # Assuming df_259N_B2, df_259N_B6, ..., df_259N_hue are your DataFrames
@@ -411,5 +402,76 @@ df_259N_merge.shape
 
 #%%
 df_259N_merge.head()
+
+# %%
+# Checking for Duplicates in both df_258N_merge and df_259N_merge
+
+# Checking for duplicates in df_258N_merge
+duplicate_rows = df_258N_merge.duplicated()
+print("Number of duplicate rows in df_258N_merge:", duplicate_rows.sum())
+
+#%%
+# Checking for duplicates in df_259N_merge
+duplicate_rows = df_259N_merge.duplicated()
+print("Number of duplicate rows in df_259N_merge:", duplicate_rows.sum())
+
+# %%
+# Checking for missing values/null values in both df_258N_merge and df_259N_merge
+
+# Checking for missing values in df_258N_merge
+missing_values = df_258N_merge.isnull().sum()
+print("Missing values per column in:\n", missing_values)
+
+#%%
+# Checking for missing values in df_258N_merge
+missing_values = df_258N_merge.isnull().sum()
+print("Missing values per column in:\n", missing_values)
+
+
+# %%
+## Exploratory Data Analysis (Visualizations
+import matplotlib.pyplot as plt
+
+# Define custom green colors
+custom_colors = ['#013220','#005C29',  '#004E00','#228B22', '#90EE90']
+# Group the DataFrame by the crop variable and count the number of rows for each group
+crop_counts = df['crop_name'].value_counts()
+
+# Plot the histogram
+plt.figure(figsize=(10, 6))
+plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
+plt.xlabel('Crop ID')
+plt.ylabel('Number of Rows')
+plt.title('Histogram of Rows per Crop')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+
+#%%
+# Set the style of seaborn
+sns.set(style="whitegrid")
+colors = sns.color_palette("Set2")
+
+# Define the numerical variables for box plots
+numerical_variables = ['B12_mean', 'B11_mean', 'B2_mean','B6_mean','EVI_mean', 'hue_mean' ]  # Add more numerical variables as needed
+
+# Define the categorical variable for grouping
+categorical_variable = 'crop_name'  # Change to 'crop_name' if needed
+
+# Create box plots for each numerical variable grouped by the categorical variable
+for numerical_var in numerical_variables:
+    plt.figure(figsize=(10, 6))  # Adjust figure size as needed
+    sns.boxplot(x=categorical_variable, y=numerical_var, data=df_259N_merge)
+    plt.title(f'Box Plot of {numerical_var} by {categorical_variable}')
+    plt.xlabel(categorical_variable, fontsize=14)
+    plt.ylabel(numerical_var, fontsize=14)
+    plt.xticks(rotation=45, fontsize=12)  # Rotate x-axis labels for better readability
+    plt.yticks(fontsize=12)  # Set font size for y-axis labels
+    plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
+    plt.tight_layout()  # Adjust layout for better spacing
+    plt.show()
+
+
+
 
 # %%
