@@ -5,6 +5,7 @@ import pyarrow.parquet as pq
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
 
  #%%
 # Define the path to the directory containing Parquet files in your Google Drive
@@ -430,22 +431,36 @@ print("Missing values per column in:\n", missing_values)
 
 # %%
 ## Exploratory Data Analysis (Visualizations
-import matplotlib.pyplot as plt
-
 # Define custom green colors
 custom_colors = ['#013220','#005C29',  '#004E00','#228B22', '#90EE90']
 # Group the DataFrame by the crop variable and count the number of rows for each group
-crop_counts = df['crop_name'].value_counts()
+crop_counts = df_258N_merge['crop_name'].value_counts()
 
 # Plot the histogram
 plt.figure(figsize=(10, 6))
 plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
 plt.xlabel('Crop ID')
-plt.ylabel('Number of Rows')
-plt.title('Histogram of Rows per Crop')
+plt.ylabel('Number of Records')
+plt.title('Histogram of Records per each Crop in 258N location')
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.show()
 
+
+
+#%%
+# Define custom green colors
+custom_colors = ['#013220','#005C29',  '#004E00','#228B22', '#90EE90']
+# Group the DataFrame by the crop variable and count the number of rows for each group
+crop_counts = df_259N_merge['crop_name'].value_counts()
+
+# Plot the histogram
+plt.figure(figsize=(10, 6))
+plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
+plt.xlabel('Crop ID')
+plt.ylabel('Number of Records')
+plt.title('Histogram of Records per Crop in 259N location')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
 
 #%%
 # Set the style of seaborn
@@ -461,7 +476,7 @@ categorical_variable = 'crop_name'  # Change to 'crop_name' if needed
 # Create box plots for each numerical variable grouped by the categorical variable
 for numerical_var in numerical_variables:
     plt.figure(figsize=(10, 6))  # Adjust figure size as needed
-    sns.boxplot(x=categorical_variable, y=numerical_var, data=df_259N_merge)
+    sns.boxplot(x=categorical_variable, y=numerical_var, data=df_258N_merge)
     plt.title(f'Box Plot of {numerical_var} by {categorical_variable}')
     plt.xlabel(categorical_variable, fontsize=14)
     plt.ylabel(numerical_var, fontsize=14)
@@ -471,7 +486,137 @@ for numerical_var in numerical_variables:
     plt.tight_layout()  # Adjust layout for better spacing
     plt.show()
 
+#%%
+# Set the style of seaborn
+sns.set(style="whitegrid")
+colors = sns.color_palette("Set2")
 
+# Define the numerical variables for box plots
+numerical_variables = ['B12_mean', 'B11_mean', 'B2_mean','B6_mean','EVI_mean', 'hue_mean' ]  # Add more numerical variables as needed
+
+# Define the categorical variable for grouping
+categorical_variable = 'crop_name'  # Change to 'crop_name' if needed
+
+# Create box plots for each numerical variable grouped by the categorical variable
+for numerical_var in numerical_variables:
+    plt.figure(figsize=(10, 6))  # Adjust figure size as needed
+    sns.boxplot(x=categorical_variable, y=numerical_var, data=df_258N_merge)
+    plt.title(f'Box Plot of {numerical_var} by {categorical_variable}')
+    plt.xlabel(categorical_variable, fontsize=14)
+    plt.ylabel(numerical_var, fontsize=14)
+    plt.xticks(rotation=45, fontsize=12)  # Rotate x-axis labels for better readability
+    plt.yticks(fontsize=12)  # Set font size for y-axis labels
+    plt.grid(axis='y', linestyle='--', alpha=0.7)  # Add horizontal grid lines
+    plt.tight_layout()  # Adjust layout for better spacing
+    plt.show()
+
+#%%
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Concatenate symmetry_looking columns into a single DataFrame
+symmetry_df = pd.concat([df_258N_merge['B2_symmetry_looking'], df_258N_merge['B6_symmetry_looking'], df_258N_merge['B11_symmetry_looking'],
+                         df_258N_merge['B12_symmetry_looking'], df_258N_merge['EVI_symmetry_looking'], df_258N_merge['hue_symmetry_looking']],
+                        axis=1)
+
+# Plot the stacked bar plot
+symmetry_df.apply(pd.Series.value_counts).plot(kind='bar', stacked=True, figsize=(10, 6))
+plt.title('Stacked Bar Plot of Symmetry Looking by Band')
+plt.xlabel('Symmetry Looking')
+plt.ylabel('Count')
+plt.xticks(rotation=45)
+plt.legend(title='Band')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+
+#%%
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Concatenate symmetry_looking columns into a single DataFrame
+symmetry_df = pd.concat([df_258N_merge['B2_symmetry_looking'], df_258N_merge['B6_symmetry_looking'], df_258N_merge['B11_symmetry_looking'],
+                         df_258N_merge['B12_symmetry_looking'], df_258N_merge['EVI_symmetry_looking'], df_258N_merge['hue_symmetry_looking']],
+                        axis=1)
+
+# Plot the stacked bar plot
+symmetry_df.apply(pd.Series.value_counts).plot(kind='barh', stacked=True, figsize=(10, 6))
+plt.title('Stacked Bar Plot of Symmetry Looking by Band')
+plt.xlabel('Symmetry Looking')
+plt.ylabel('Count')
+plt.xticks(rotation=45)
+plt.legend(title='Band')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+# %%
+# Checking for outliers using  IQR in both df_258N_merge and df_259N_merge
+
+# Checking for outliers using IQR in df_258N_merge
+from scipy import stats
+
+# Filter out columns with string data types
+numeric_columns = df_258N_merge.select_dtypes(include=['number'])
+
+# Calculate the first quartile (Q1) and third quartile (Q3) for numeric columns
+Q1 = numeric_columns.quantile(0.05)
+Q3 = numeric_columns.quantile(0.95)
+
+# Calculate the interquartile range (IQR) for numeric columns
+IQR = Q3 - Q1
+
+# Define the outlier bounds for numeric columns
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Check for outliers in numeric columns
+outliers = ((numeric_columns < lower_bound) | (numeric_columns > upper_bound)).any(axis=1)
+
+# Print the number of outliers
+print("Number of outliers in df_258N_merge:", outliers.sum())
+
+# %%
+# Checking for outliers using IQR in df_259N_merge
+
+# Filter out columns with string data types
+numeric_columns = df_259N_merge.select_dtypes(include=['number'])
+
+# Calculate the first quartile (Q1) and third quartile (Q3) for numeric columns
+Q1 = numeric_columns.quantile(0.05)
+Q3 = numeric_columns.quantile(0.95)
+
+# Calculate the interquartile range (IQR) for numeric columns
+IQR = Q3 - Q1
+
+# Define the outlier bounds for numeric columns
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+
+# Check for outliers in numeric columns
 
 
 # %%
+outliers = ((numeric_columns < lower_bound) | (numeric_columns > upper_bound)).any(axis=1)
+
+# Print the number of outliers
+print("Number of outliers in df_259N_merge:", outliers.sum())
+
+# %%
+df_258N_merge.shape
+
+#%%
+# Remove outliers from df_258N_merge
+df_258N_merged = df_258N_merge[~outliers]
+df_258N_merged.shape
+
+# %%
+df_259N_merge.shape
+
+#%%
+# Remove outliers from df_258N_merge
+df_259N_merged = df_259N_merge[~outliers]
+df_259N_merged.shape
+
+#%%
+df_259N_merged.columns
+
