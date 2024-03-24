@@ -108,7 +108,6 @@ df_258N_B12 = pd.read_parquet("/home/ubuntu/Capstone/data/B12_34S_19E_258N.parqu
 df_258N_EVI = pd.read_parquet("/home/ubuntu/Capstone/data/EVI_34S_19E_258N.parquet")
 df_258N_hue = pd.read_parquet("/home/ubuntu/Capstone/data/hue_34S_19E_258N.parquet")
 
-#%%
 # Joining of B2, B6, B11, B12, EVI, Hue datasets of location 258N
 df_258N_merge = pd.concat([df_258N_B2, df_258N_B6, df_258N_B11, df_258N_B12, df_258N_EVI, df_258N_hue], axis=1, join='outer')
 # Print the first five rows of 258N_merge file
@@ -176,7 +175,6 @@ df_259N_B12 = pd.read_parquet("/home/ubuntu/Capstone/data/B12_34S_19E_259N.parqu
 df_259N_EVI = pd.read_parquet("/home/ubuntu/Capstone/data/EVI_34S_19E_259N.parquet")
 df_259N_hue = pd.read_parquet("/home/ubuntu/Capstone/data/hue_34S_19E_259N.parquet")
 
-#%%
 # Joining of B2, B6, B11, B12, EVI, Hue datasets of location 259N
 df_259N_merge = pd.concat([df_259N_B2, df_259N_B6, df_259N_B11, df_259N_B12, df_259N_EVI, df_259N_hue], axis=1, join='outer')
 # Print the first five rows of 259N_merge file
@@ -469,83 +467,167 @@ pd.set_option('display.max_columns', None)
 print(correlation) 
 
 #%%
-# Recursive Feature Elimination (RFE) with a Random Forest Classifier as an estimator
-import pandas as pd
-from sklearn.feature_selection import RFE
-from sklearn.ensemble import RandomForestClassifier # Or any other suitable model
+# Assuming df is your DataFrame containing the column 'crop_name' and 'B2_standard_deviation'
 
-#%%
-# Separate features and target variable
-X_location1 = df_258N_merge.drop(columns=['crop_name'])
-y_location1 = df_258N_merge['crop_name']
+# Plot boxplot for B2_standard_deviation column grouped by crop_name
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='crop_name', y='hue_maximum', data=df_258N_Cleaned)
+plt.title('B12_quantile_q_0.05 for Each Crop Type')
+plt.xlabel('Crop Type')
+plt.ylabel('hue_maximum')
+plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
 
-X_location2 = df_259N_merge.drop(columns=['crop_name'])
-y_location2 = df_259N_merge['crop_name']
 
-#%%
-# Initialize RFE with a classifier (e.g., RandomForestClassifier)
-estimator = RandomForestClassifier() # You can use any other suitable classifier
-
-#%%
-# Perform feature selection for Location 1
-selector_location1 = RFE(estimator, n_features_to_select=20) # Select 10 best features
-selector_location1.fit(X_location1, y_location1)
-
-#%%
-# Perform feature selection for Location 2
-selector_location2 = RFE(estimator, n_features_to_select=20) # Select 10 best features
-selector_location2.fit(X_location2, y_location2)
-
-#%%
-# Get the selected features for each location
-selected_features_location1 = X_location1.columns[selector_location1.support_]
-selected_features_location2 = X_location2.columns[selector_location2.support_]
-
-#%%
-# Combine selected features if necessary
-# combined_selected_features = set(selected_features_location1) | set(selected_features_location2)
-
-# Print the selected features for each location
-print("Selected features for Location 1:", selected_features_location1)
-print("Selected features for Location 2:", selected_features_location2)
-
-#%%
-import pandas as pd
-from sklearn.feature_selection import RFE
-from sklearn.ensemble import RandomForestClassifier
+# %%
 from sklearn.model_selection import train_test_split
+from imblearn.under_sampling import RandomUnderSampler
 
-# Load your large dataset
-df = pd.read_parquet('large_dataset.parquet')
+# Assuming X_train and y_train are your features and target variable respectively
+# Separate features and target variable
+X_train_258N = df_258N_Cleaned.drop(columns=['crop_name'])
+y_train_258N = df_258N_Cleaned['crop_name']
 
-# Define the number of partitions
-num_partitions = 5
+# Create an instance of RandomUnderSampler
+undersampler = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
 
-# Split the dataset into partitions
-partitioned_data = []
-for i in range(num_partitions):
-    partition, _ = train_test_split(df, test_size=1/num_partitions, random_state=i)
-    partitioned_data.append(partition)
+# Perform undersampling
+X_train_resampled_258N, y_train_resampled_258N = undersampler.fit_resample(X_train_258N, y_train_258N)
 
-# Perform feature selection on each partition
-selected_features = set()
-for i, partition in enumerate(partitioned_data):
-    X = partition.drop(columns=['target_column'])
-    y = partition['target_column']
-    
-    # Initialize RFE with a RandomForestClassifier
-    estimator = RandomForestClassifier()
-    selector = RFE(estimator, n_features_to_select=10)  # Adjust the number of features as needed
-    
-    # Fit RFE
-    selector.fit(X, y)
-    
-    # Get the selected features
-    selected_features.update(X.columns[selector.support_])
-    print(f"Selected features for partition {i+1}:", X.columns[selector.support_])
+# Now X_train_resampled and y_train_resampled contain the balanced dataset after undersampling
 
-# Convert selected_features to a list (if needed)
-selected_features = list(selected_features)
+# %%
+# Assuming you have already performed undersampling and stored the results in X_train_resampled
+# Print the shape of X_train_resampled to see the number of samples and features
+print("Shape of X_train_resampled:", X_train_resampled_258N.shape)
 
-# Further processing or modeling with the selected features...
-                      
+#%%
+# Optionally, you can print the first few rows of X_train_resampled
+print("First few rows of X_train_resampled:")
+X_train_resampled_258N.head()
+
+#%%
+# Observing the number of records of each crop in 258N location aFter Under Sampling
+# Define custom green colors
+custom_colors = ['#013220', '#005C29', '#004E00', '#228B22', '#90EE90']
+
+# Group the DataFrame by the crop variable and count the number of rows for each group
+crop_counts = X_train_resampled_258N['crop_id'].value_counts()
+
+# Plot the histogram
+plt.figure(figsize=(10, 6))
+bars = plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
+
+# Add value labels to each bar
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height}', ha='center', va='bottom')
+
+plt.xlabel('Crop ID')
+plt.ylabel('Number of Records')
+plt.title('Histogram of Records per each Crop in 259N location')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+# %%
+from sklearn.model_selection import train_test_split
+from imblearn.under_sampling import RandomUnderSampler
+
+# Assuming X_train and y_train are your features and target variable respectively
+# Separate features and target variable
+X_train_259N = df_259N_Cleaned.drop(columns=['crop_name'])
+y_train_259N = df_259N_Cleaned['crop_name']
+
+# Create an instance of RandomUnderSampler
+undersampler = RandomUnderSampler(sampling_strategy='auto', random_state=42, replacement=False)
+
+# Perform undersampling
+X_train_resampled_259N, y_train_resampled_259N = undersampler.fit_resample(X_train_259N, y_train_259N)
+
+# Now X_train_resampled and y_train_resampled contain the balanced dataset after undersampling
+
+# %%
+# Assuming you have already performed undersampling and stored the results in X_train_resampled
+# Print the shape of X_train_resampled to see the number of samples and features
+print("Shape of X_train_resampled:", X_train_resampled_259N.shape)
+
+#%%
+# Optionally, you can print the first few rows of X_train_resampled
+print("First few rows of X_train_resampled:")
+X_train_resampled_259N.head()
+
+#%%
+# Observing the number of records of each crop in 258N location aFter Under Sampling
+# Define custom green colors
+custom_colors = ['#013220', '#005C29', '#004E00', '#228B22', '#90EE90']
+
+# Group the DataFrame by the crop variable and count the number of rows for each group
+crop_counts = X_train_resampled_259N['crop_id'].value_counts()
+
+# Plot the histogram
+plt.figure(figsize=(10, 6))
+bars = plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
+
+# Add value labels to each bar
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height}', ha='center', va='bottom')
+
+plt.xlabel('Crop ID')
+plt.ylabel('Number of Records')
+plt.title('Histogram of Records per each Crop in 259N location')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.show()
+
+# %%
+from sklearn.preprocessing import StandardScaler
+
+# Assuming X_train_resampled is your resampled feature data
+
+# Initialize StandardScaler
+scaler = StandardScaler()
+
+# Fit the scaler to your data to compute mean and standard deviation
+scaler.fit(X_train_resampled_258N)
+
+# Transform your data using the computed mean and standard deviation
+X_train_resampled_scaled_258N = scaler.transform(X_train_resampled_258N)
+
+# Now X_train_resampled_scaled contains the standardized feature data
+
+# Assuming X_train_resampled_scaled is your standardized feature data
+
+# Print the shape of X_train_resampled_scaled
+print("Shape of X_train_resampled_scaled:", X_train_resampled_scaled_258N.shape)
+
+# Optionally, print the first few rows of X_train_resampled_scaled
+print("First few rows of X_train_resampled_scaled:")
+print(X_train_resampled_scaled_258N[:5])  # Print the first 5 rows
+
+
+# %%
+from sklearn.preprocessing import StandardScaler
+
+# Assuming X_train_resampled is your resampled feature data
+# Initialize StandardScaler
+scaler = StandardScaler()
+
+# Fit the scaler to your data to compute mean and standard deviation
+scaler.fit(X_train_resampled_259N)
+
+# Transform your data using the computed mean and standard deviation
+X_train_resampled_scaled_259N = scaler.transform(X_train_resampled_259N)
+
+# Assuming X_train_resampled_scaled is your standardized feature data
+
+# Print the shape of X_train_resampled_scaled
+print("Shape of X_train_resampled_scaled:", X_train_resampled_scaled_259N.shape)
+
+# Optionally, print the first few rows of X_train_resampled_scaled
+print("First few rows of X_train_resampled_scaled:")
+print(X_train_resampled_scaled_259N[:5])  # Print the first 5 rows
+
+
+# Now X_train_resampled_scaled contains the standardized feature data
+# %%
