@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 
-   #%%
+ #%%
 # Define the path to the directory containing Parquet files
 parquet_directory = '/home/ubuntu/Capstone/data'
 
@@ -441,31 +441,6 @@ full_path = os.path.join(current_directory, filename)
 
 print("Full path of the parquet file:", full_path)
 
-
-#%%
-# Assuming you have loaded your dataset into a DataFrame called 'df_258N_Cleaned'
-# 'target_variable' is the name of your target variable
-# Make sure to replace these with your actual variable names
-
-# Filter out non-numeric columns
-numeric_columns = df_258N_Cleaned.select_dtypes(include=[np.number])
-
-# Calculate correlation
-correlation = numeric_columns.corrwith(df_258N_Cleaned['crop_id'])
-
-# Absolute correlation values
-correlation = correlation.abs()
-
-# Sort correlation values in descending order
-correlation = correlation.sort_values(ascending=False)
-
-# Display all rows and columns without truncation
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
-
-# Print the sorted correlation values
-print(correlation) 
-
 #%%
 # Assuming df is your DataFrame containing the column 'crop_name' and 'B2_standard_deviation'
 
@@ -479,8 +454,8 @@ plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
 plt.grid(axis='y', linestyle='--', alpha=0.7)
 plt.show()
 
-
 # %%
+# UnderSampling the data df_258N_Cleaned
 from sklearn.model_selection import train_test_split
 from imblearn.under_sampling import RandomUnderSampler
 
@@ -507,28 +482,66 @@ print("Shape of X_train_resampled:", X_train_resampled_258N.shape)
 print("First few rows of X_train_resampled:")
 X_train_resampled_258N.head()
 
+# %%
+# Standardize t
+from sklearn.preprocessing import StandardScaler
+
+# Assuming X_train_resampled is your resampled feature data
+
+# Initialize StandardScaler
+scaler = StandardScaler()
+
+# Fit the scaler to your data to compute mean and standard deviation
+scaler.fit(X_train_resampled_258N)
+
+# Transform your data using the computed mean and standard deviation
+X_train_resampled_scaled_258N = scaler.transform(X_train_resampled_258N)
+
+# Now X_train_resampled_scaled contains the standardized feature data
+
+# Assuming X_train_resampled_scaled is your standardized feature data
+
+# Print the shape of X_train_resampled_scaled
+print("Shape of X_train_resampled_scaled:", X_train_resampled_scaled_258N.shape)
+
+
 #%%
-# Observing the number of records of each crop in 258N location aFter Under Sampling
-# Define custom green colors
-custom_colors = ['#013220', '#005C29', '#004E00', '#228B22', '#90EE90']
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X_train_resampled_scaled_258N, y_train_resampled_258N, test_size=0.33, random_state=42)
 
-# Group the DataFrame by the crop variable and count the number of rows for each group
-crop_counts = X_train_resampled_258N['crop_id'].value_counts()
+#%%
+#Import Random Forest Classifier
+from sklearn.ensemble import RandomForestClassifier
 
-# Plot the histogram
-plt.figure(figsize=(10, 6))
-bars = plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
+clf = RandomForestClassifier(n_estimators=50,max_depth=10, n_jobs=-1, random_state=0,)
 
-# Add value labels to each bar
-for bar in bars:
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height}', ha='center', va='bottom')
+clf.fit(X_train,y_train)
 
-plt.xlabel('Crop ID')
-plt.ylabel('Number of Records')
-plt.title('Histogram of Records per each Crop in 259N location')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.show()
+#%%
+from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score
+
+# Predict on the sampled test set
+y_pred = clf.predict(X_test)
+
+# Calculate accuracy on sampled test set
+accuracy_sampled = accuracy_score(y_test, y_pred)
+print("Accuracy on Sampled Test Set:", accuracy_sampled)
+
+# Generate classification report for sampled test set
+report_sampled = classification_report(y_test, y_pred)
+print("Classification Report on Sampled Test Set:\n", report_sampled)
+
+# Calculate precision, recall, and F1-score for sampled test set
+precision_sampled = precision_score(y_test, y_pred, average='weighted')
+recall_sampled = recall_score(y_test, y_pred, average='weighted')
+f1_sampled = f1_score(y_test, y_pred, average='weighted')
+print("Precision on Sampled Test Set:", precision_sampled)
+print("Recall on Sampled Test Set:", recall_sampled)
+print("F1-Score on Sampled Test Set:", f1_sampled)
+
+
+#%%
+max(clf.feature_importances_)
 
 # %%
 from sklearn.model_selection import train_test_split
@@ -557,54 +570,6 @@ print("Shape of X_train_resampled:", X_train_resampled_259N.shape)
 print("First few rows of X_train_resampled:")
 X_train_resampled_259N.head()
 
-#%%
-# Observing the number of records of each crop in 258N location aFter Under Sampling
-# Define custom green colors
-custom_colors = ['#013220', '#005C29', '#004E00', '#228B22', '#90EE90']
-
-# Group the DataFrame by the crop variable and count the number of rows for each group
-crop_counts = X_train_resampled_259N['crop_id'].value_counts()
-
-# Plot the histogram
-plt.figure(figsize=(10, 6))
-bars = plt.bar(crop_counts.index, crop_counts.values, color=custom_colors)
-
-# Add value labels to each bar
-for bar in bars:
-    height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{height}', ha='center', va='bottom')
-
-plt.xlabel('Crop ID')
-plt.ylabel('Number of Records')
-plt.title('Histogram of Records per each Crop in 259N location')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
-plt.show()
-
-# %%
-from sklearn.preprocessing import StandardScaler
-
-# Assuming X_train_resampled is your resampled feature data
-
-# Initialize StandardScaler
-scaler = StandardScaler()
-
-# Fit the scaler to your data to compute mean and standard deviation
-scaler.fit(X_train_resampled_258N)
-
-# Transform your data using the computed mean and standard deviation
-X_train_resampled_scaled_258N = scaler.transform(X_train_resampled_258N)
-
-# Now X_train_resampled_scaled contains the standardized feature data
-
-# Assuming X_train_resampled_scaled is your standardized feature data
-
-# Print the shape of X_train_resampled_scaled
-print("Shape of X_train_resampled_scaled:", X_train_resampled_scaled_258N.shape)
-
-# Optionally, print the first few rows of X_train_resampled_scaled
-print("First few rows of X_train_resampled_scaled:")
-print(X_train_resampled_scaled_258N[:5])  # Print the first 5 rows
-
 
 # %%
 from sklearn.preprocessing import StandardScaler
@@ -624,10 +589,41 @@ X_train_resampled_scaled_259N = scaler.transform(X_train_resampled_259N)
 # Print the shape of X_train_resampled_scaled
 print("Shape of X_train_resampled_scaled:", X_train_resampled_scaled_259N.shape)
 
-# Optionally, print the first few rows of X_train_resampled_scaled
-print("First few rows of X_train_resampled_scaled:")
-print(X_train_resampled_scaled_259N[:5])  # Print the first 5 rows
 
+#%%
+from sklearn.model_selection import train_test_split
+X_train_259N, X_test_259N, y_train_259N, y_test_259N = train_test_split(X_train_resampled_scaled_259N, y_train_resampled_259N, test_size=0.33, random_state=42)
+
+#%%
+#Import Random Forest Classifier
+from sklearn.ensemble import RandomForestClassifier
+
+clf = RandomForestClassifier(n_estimators=50,max_depth=10, n_jobs=-1, random_state=0,)
+
+clf.fit(X_train_259N,y_train_259N)
+
+#%%
+from sklearn.metrics import classification_report, accuracy_score, precision_score, recall_score, f1_score
+
+# Predict on the sampled test set
+y_pred_259N = clf.predict(X_test_259N)
+
+# Calculate accuracy on sampled test set
+accuracy_sampled = accuracy_score(y_test_259N, y_pred_259N)
+print("Accuracy on Sampled Test Set:", accuracy_sampled)
+
+# Generate classification report for sampled test set
+report_sampled = classification_report(y_test_259N, y_pred_259N)
+print("Classification Report on Sampled Test Set:\n", report_sampled)
+
+# Calculate precision, recall, and F1-score for sampled test set
+precision_sampled = precision_score(y_test_259N, y_pred_259N, average='weighted')
+recall_sampled = recall_score(y_test_259N, y_pred_259N, average='weighted')
+f1_sampled = f1_score(y_test_259N, y_pred_259N, average='weighted')
+print("Precision on Sampled Test Set:", precision_sampled)
+print("Recall on Sampled Test Set:", recall_sampled)
+print("F1-Score on Sampled Test Set:", f1_sampled)
 
 # Now X_train_resampled_scaled contains the standardized feature data
-# %%
+
+#%%
