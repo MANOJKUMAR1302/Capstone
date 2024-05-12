@@ -1,4 +1,5 @@
 # Enhancing Sustainable Agriculture in South Africa through Data Science
+Multi-crop classification in South Africa using Sentinel satellite imagery across multiple spectral bands.
 
 ## Project Description:
 This project aims to address critical food security challenges in South Africa by leveraging data science techniques, particularly advanced crop classification methods. South Africa faces issues such as crop failures, fluctuating production, and managing imports, which threaten its food security. The primary challenge is to utilize data science tools to enhance food security by improving crop monitoring and accurate crop prediction in South Africa's agricultural sector.
@@ -33,9 +34,3 @@ The satellite imagery provides information on various agricultural parameters us
 **6. Model Evaluation:** Evaluate the performance of the developed models using metrics such as precision, recall, and F1-score. Compare the performance of different models and identify the most effective approach for crop classification in South Africa.
 
 **7. Results Analysis:** Analyze the results of the model predictions to gain insights into crop distribution patterns, model performance, and areas for improvement. Interpret the findings to inform recommendations for enhancing food security and agricultural practices in South Africa.
-
-
-
-
-
-User
