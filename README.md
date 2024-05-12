@@ -1,4 +1,4 @@
-# Enhancing Sustainable Agriculture in South Africa through Data Science
+# Enhancing Sustainable Agriculture in South Africa
 Multi-crop classification in South Africa using Sentinel satellite imagery across multiple spectral bands.
 
 ## Project Description:
