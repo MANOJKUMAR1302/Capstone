@@ -823,6 +823,76 @@ report_sampled_259N_top_RF = classification_report(y_259_undersampled_top, y_pre
 print("Classification Report on Location 259 using Train & Test Split:\n", report_sampled_259N_top_RF)
 
 #%%
+# To analyze the Plot Level Performance (field Level: Mode of crop present in each field) instead of directly considering above Model Prediction values
+# Perform the below code
+
+#Calculating the number of unique fields in our data
+num_unique_fid = df_259N_Cleaned['fid'].nunique()
+print("Number of unique fid:", num_unique_fid)
+
+# Calculating the number of point extratced from each field in the data
+fid_counts = df_259N_Cleaned['fid'].value_counts()
+print(fid_counts)
+
+# Checking the mode of 'crop_name' within each field based on fid
+highest_crop_per_fid = df_259N_Cleaned.groupby('fid')['crop_name'].agg(lambda x: x.mode().iloc[0]).reset_index()
+
+# Rename the columns for clarity
+highest_crop_per_fid.columns = ['fid', 'highest_occurred_crop']
+
+# Recheck the size of the new dataframe with mode crop_name
+print(highest_crop_per_fid)
+
+#%%
+# Create a copy of the selected features DataFrame
+X_259_top = df_259N_Cleaned[top_features_258].copy()
+y_259_top = df_259N_Cleaned['crop_name']
+
+# # Initialize StandardScaler
+scaler_259_top = StandardScaler()
+
+# # Fit the scaler to your data to compute mean and standard deviation
+scaler_259_top.fit(X_259_top)
+
+# # Transform your data using the computed mean and standard deviation
+X_scaled_259N_top = scaler_259_top.transform(X_259_top)
+
+# Make predictions for all instances
+y_pred_all = clf_258N_top_RF.predict(X_scaled_259N_top)
+
+#print the shape of y_pred_all
+y_pred_all.shape
+
+#%%
+# Convert NumPy array to pandas Series
+y_pred_series = pd.Series(y_pred_all, name='predicted_crop')
+
+# Reset indices of both Series and DataFrame
+y_pred_series.reset_index(drop=True, inplace=True)
+df_259N_Cleaned.reset_index(drop=True, inplace=True)
+
+# Concatenate the Series and the DataFrame
+df2 = pd.concat([y_pred_series, df_259N_Cleaned['fid']], axis=1)
+
+#%%
+# # Checking the mode of 'crop_name' within each field based on fid using  Model Predicted values 
+df2_highest_crop_per_fid = df2.groupby('fid')['predicted_crop'].agg(lambda x: x.mode().iloc[0]).reset_index()
+
+# Rename the columns for clarity
+df2_highest_crop_per_fid.columns = ['fid', 'predicted_crop']
+
+print(df2_highest_crop_per_fid)
+
+#%%
+# Check if the values of crop_name in test data and model predicted values are same or not and calculate the Percentage of Correct macthes
+matches = (highest_crop_per_fid['fid'] == df2_highest_crop_per_fid['fid']) & (highest_crop_per_fid['highest_occurred_crop'] == df2_highest_crop_per_fid['predicted_crop'])
+
+# Calculate the percentage of correct matches
+percentage_correct = (matches.sum() / len(matches)) * 100
+
+print(f"Percentage of correct matching: {percentage_correct:.2f}%")
+
+#%%
 # XGBoost
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
